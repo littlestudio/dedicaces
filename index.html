@@ -61,62 +61,117 @@
     <button onclick="exporterPDF()">Exporter en PDF</button>
 
     <script>
-        function ajouterLigne() {
-            let nom = document.getElementById("nomClient").value.trim();
-            let dedicace = document.getElementById("dedicace").value.trim();
-            let paiement = document.getElementById("statutPaiement").value;
+    // Charger les données enregistrées
+    function chargerTableau() {
+        let donnees = localStorage.getItem("dedicaces");
+        if (donnees) {
+            let tableau = JSON.parse(donnees);
+            tableau.forEach(ajouterLigneDepuisStockage);
+        }
+    }
 
-            if (nom === "" || dedicace === "") {
-                alert("Veuillez remplir tous les champs.");
-                return;
-            }
+    // Ajouter une ligne dans le tableau (avec sauvegarde)
+    function ajouterLigne() {
+        let nom = document.getElementById("nomClient").value.trim();
+        let dedicace = document.getElementById("dedicace").value.trim();
+        let paiement = document.getElementById("statutPaiement").value;
 
-            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
-            let nouvelleLigne = tableau.insertRow();
-
-            let celluleNom = nouvelleLigne.insertCell(0);
-            let celluleDedicace = nouvelleLigne.insertCell(1);
-            let cellulePaiement = nouvelleLigne.insertCell(2);
-            let celluleSupprimer = nouvelleLigne.insertCell(3);
-
-            celluleNom.textContent = nom;
-            celluleDedicace.textContent = dedicace;
-            cellulePaiement.textContent = paiement;
-
-            let boutonSupprimer = document.createElement("button");
-            boutonSupprimer.textContent = "Supprimer";
-            boutonSupprimer.onclick = function() {
-                tableau.deleteRow(nouvelleLigne.rowIndex - 1);
-            };
-
-            celluleSupprimer.appendChild(boutonSupprimer);
-
-            document.getElementById("nomClient").value = "";
-            document.getElementById("dedicace").value = "";
+        if (nom === "" || dedicace === "") {
+            alert("Veuillez remplir tous les champs.");
+            return;
         }
 
-        function exporterPDF() {
-            const { jsPDF } = window.jspdf;
-            let doc = new jsPDF();
+        let nouvelleLigne = ajouterLigneDepuisStockage({ nom, dedicace, paiement });
 
-            doc.text("Liste des Dédicaces", 10, 10);
+        // Sauvegarde des données
+        sauvegarderTableau();
 
-            let tableau = document.getElementById("tableau");
-            let lignes = tableau.rows;
-            let y = 20;
+        // Réinitialiser les champs
+        document.getElementById("nomClient").value = "";
+        document.getElementById("dedicace").value = "";
+    }
 
-            for (let i = 0; i < lignes.length; i++) {
-                let texte = "";
-                for (let j = 0; j < lignes[i].cells.length - 1; j++) {
-                    texte += lignes[i].cells[j].textContent + " | ";
-                }
-                doc.text(texte, 10, y);
-                y += 10;
-            }
+    // Ajouter une ligne depuis LocalStorage sans la sauvegarder à nouveau
+    function ajouterLigneDepuisStockage(data) {
+        let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
+        let nouvelleLigne = tableau.insertRow();
 
-            doc.save("dedicaces.pdf");
+        let celluleNom = nouvelleLigne.insertCell(0);
+        let celluleDedicace = nouvelleLigne.insertCell(1);
+        let cellulePaiement = nouvelleLigne.insertCell(2);
+        let celluleSupprimer = nouvelleLigne.insertCell(3);
+
+        celluleNom.textContent = data.nom;
+        celluleDedicace.textContent = data.dedicace;
+        cellulePaiement.textContent = data.paiement;
+
+        let boutonSupprimer = document.createElement("button");
+        boutonSupprimer.textContent = "Supprimer";
+        boutonSupprimer.onclick = function() {
+            tableau.deleteRow(nouvelleLigne.rowIndex - 1);
+            sauvegarderTableau();
+        };
+
+        celluleSupprimer.appendChild(boutonSupprimer);
+        return nouvelleLigne;
+    }
+
+    // Sauvegarder le tableau dans LocalStorage
+    function sauvegarderTableau() {
+        let tableau = [];
+        let lignes = document.querySelectorAll("#tableau tbody tr");
+        lignes.forEach(ligne => {
+            let cellules = ligne.getElementsByTagName("td");
+            tableau.push({
+                nom: cellules[0].textContent,
+                dedicace: cellules[1].textContent,
+                paiement: cellules[2].textContent
+            });
+        });
+
+        localStorage.setItem("dedicaces", JSON.stringify(tableau));
+    }
+
+<script>
+    function exporterPDF() {
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF();
+
+        doc.text("Liste des Dédicaces", 10, 10);
+
+        let tableau = document.getElementById("tableau");
+        let lignes = tableau.rows;
+        let donnees = [];
+
+        // Ajouter l'en-tête
+        let entete = ["Nom du Client", "Dédicace", "Payé"];
+        donnees.push(entete);
+
+        // Ajouter les lignes du tableau (sans la colonne "Action")
+        for (let i = 1; i < lignes.length; i++) {
+            let cellules = lignes[i].cells;
+            let ligne = [
+                cellules[0].textContent, // Nom
+                cellules[1].textContent, // Dédicace
+                cellules[2].textContent  // Payé
+            ];
+            donnees.push(ligne);
         }
-    </script>
+
+        // Génération du tableau PDF
+        doc.autoTable({
+            head: [donnees[0]], // Première ligne : en-tête
+            body: donnees.slice(1), // Contenu du tableau
+            startY: 20
+        });
+
+        doc.save("dedicaces.pdf");
+    }
+</script>
+
+    // Charger les données sauvegardées au démarrage
+    document.addEventListener("DOMContentLoaded", chargerTableau);
+</script>
 
 </body>
 </html>
