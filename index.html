@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Dédicaces</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Liste des Dédicaces</h2>
+
+    <label>Nom du Client : </label>
+    <input type="text" id="nomClient">
+    <label>Dédicace : </label>
+    <input type="text" id="dedicace">
+    <label>Payé ?</label>
+    <select id="statutPaiement">
+        <option value="Oui">Oui</option>
+        <option value="Non">Non</option>
+    </select>
+    <button onclick="ajouterLigne()">Ajouter</button>
+
+    <table id="tableau">
+        <thead>
+            <tr>
+                <th>Nom du Client</th>
+                <th>Dédicace</th>
+                <th>Payé</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button onclick="exporterPDF()">Exporter en PDF</button>
+
+    <script>
+        function ajouterLigne() {
+            let nom = document.getElementById("nomClient").value.trim();
+            let dedicace = document.getElementById("dedicace").value.trim();
+            let paiement = document.getElementById("statutPaiement").value;
+
+            if (nom === "" || dedicace === "") {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
+            let nouvelleLigne = tableau.insertRow();
+
+            let celluleNom = nouvelleLigne.insertCell(0);
+            let celluleDedicace = nouvelleLigne.insertCell(1);
+            let cellulePaiement = nouvelleLigne.insertCell(2);
+            let celluleSupprimer = nouvelleLigne.insertCell(3);
+
+            celluleNom.textContent = nom;
+            celluleDedicace.textContent = dedicace;
+            cellulePaiement.textContent = paiement;
+
+            let boutonSupprimer = document.createElement("button");
+            boutonSupprimer.textContent = "Supprimer";
+            boutonSupprimer.onclick = function() {
+                tableau.deleteRow(nouvelleLigne.rowIndex - 1);
+            };
+
+            celluleSupprimer.appendChild(boutonSupprimer);
+
+            document.getElementById("nomClient").value = "";
+            document.getElementById("dedicace").value = "";
+        }
+
+        function exporterPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+
+            doc.text("Liste des Dédicaces", 10, 10);
+
+            let tableau = document.getElementById("tableau");
+            let lignes = tableau.rows;
+            let y = 20;
+
+            for (let i = 0; i < lignes.length; i++) {
+                let texte = "";
+                for (let j = 0; j < lignes[i].cells.length - 1; j++) {
+                    texte += lignes[i].cells[j].textContent + " | ";
+                }
+                doc.text(texte, 10, y);
+                y += 10;
+            }
+
+            doc.save("dedicaces.pdf");
+        }
+    </script>
+
+</body>
+</html>
