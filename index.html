@@ -39,4 +39,168 @@
 
     <h2>Liste des Dédicaces</h2>
 
-    <label>Nom
+    <label>Nom du Client : </label>
+    <input type="text" id="nomClient">
+    
+    <label>Qté Albums : </label>
+    <input type="number" id="quantiteAlbum" min="1" value="1" style="width: 50px;">
+    
+    <label>Dédicace : </label>
+    <input type="text" id="dedicace">
+    
+    <label>Payé ?</label>
+    <select id="statutPaiement">
+        <option value="Oui">Oui</option>
+        <option value="Non">Non</option>
+    </select>
+    
+    <label>Totebag ?</label>
+    <select id="totebag">
+        <option value="Non">Non</option>
+        <option value="Oui">Oui</option>
+    </select>
+    
+    <label>Qté Totebags :</label>
+    <input type="number" id="quantiteTotebag" min="0" value="0" style="width: 50px;">
+    
+    <button onclick="ajouterLigne()">Ajouter</button>
+
+    <table id="tableau">
+        <thead>
+            <tr>
+                <th onclick="trierTableau()">Nom du Client &#9662;</th>
+                <th>Qté Albums</th>
+                <th>Dédicace</th>
+                <th>Payé</th>
+                <th>Totebag</th>
+                <th>Qté Totebags</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button onclick="exporterPDF()">Exporter en PDF</button>
+
+    <script>
+        let ordreCroissant = true;
+
+        document.addEventListener("DOMContentLoaded", chargerTableau);
+
+        function chargerTableau() {
+            let donnees = localStorage.getItem("dedicaces");
+            if (donnees) {
+                let tableau = JSON.parse(donnees);
+                tableau.forEach(ajouterLigneDepuisStockage);
+            }
+        }
+
+        function ajouterLigne() {
+            let nom = document.getElementById("nomClient").value.trim();
+            let quantiteAlbum = document.getElementById("quantiteAlbum").value;
+            let dedicace = document.getElementById("dedicace").value.trim();
+            let paiement = document.getElementById("statutPaiement").value;
+            let totebag = document.getElementById("totebag").value;
+            let quantiteTotebag = document.getElementById("quantiteTotebag").value;
+
+            if (nom === "" || dedicace === "") {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            let paiementEmoji = paiement === "Oui" ? "✅" : "❌";
+
+            let nouvelleLigne = { nom, quantiteAlbum, dedicace, paiementEmoji, totebag, quantiteTotebag };
+            ajouterLigneDepuisStockage(nouvelleLigne);
+
+            sauvegarderTableau();
+            trierTableau();
+
+            document.getElementById("nomClient").value = "";
+            document.getElementById("dedicace").value = "";
+            document.getElementById("quantiteAlbum").value = "1";
+            document.getElementById("totebag").value = "Non";
+            document.getElementById("quantiteTotebag").value = "0";
+        }
+
+        function ajouterLigneDepuisStockage(data) {
+            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
+            let nouvelleLigne = tableau.insertRow();
+
+            let cellules = [
+                nouvelleLigne.insertCell(0),
+                nouvelleLigne.insertCell(1),
+                nouvelleLigne.insertCell(2),
+                nouvelleLigne.insertCell(3),
+                nouvelleLigne.insertCell(4),
+                nouvelleLigne.insertCell(5),
+                nouvelleLigne.insertCell(6)
+            ];
+
+            cellules[0].textContent = data.nom;
+            cellules[1].textContent = data.quantiteAlbum;
+            cellules[2].textContent = data.dedicace;
+            cellules[3].textContent = data.paiementEmoji;
+            cellules[4].textContent = data.totebag;
+            cellules[5].textContent = data.quantiteTotebag;
+
+            let boutonSupprimer = document.createElement("button");
+            boutonSupprimer.textContent = "Supprimer";
+            boutonSupprimer.onclick = function() {
+                tableau.deleteRow(nouvelleLigne.rowIndex - 1);
+                sauvegarderTableau();
+            };
+
+            cellules[6].appendChild(boutonSupprimer);
+        }
+
+        function sauvegarderTableau() {
+            let tableau = [];
+            let lignes = document.querySelectorAll("#tableau tbody tr");
+            lignes.forEach(ligne => {
+                let cellules = ligne.getElementsByTagName("td");
+                tableau.push({
+                    nom: cellules[0].textContent,
+                    quantiteAlbum: cellules[1].textContent,
+                    dedicace: cellules[2].textContent,
+                    paiementEmoji: cellules[3].textContent,
+                    totebag: cellules[4].textContent,
+                    quantiteTotebag: cellules[5].textContent
+                });
+            });
+
+            localStorage.setItem("dedicaces", JSON.stringify(tableau));
+        }
+
+        function exporterPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF({ orientation: "landscape" });
+
+            doc.text("Liste des Dédicaces", 10, 10);
+
+            let donnees = [];
+            let entete = ["Nom", "Qté Albums", "Dédicace", "Payé", "Totebag", "Qté Totebags"];
+            donnees.push(entete);
+
+            let lignes = document.querySelectorAll("#tableau tbody tr");
+            lignes.forEach(ligne => {
+                let cellules = ligne.getElementsByTagName("td");
+                let lignePDF = [
+                    cellules[0].textContent,
+                    cellules[1].textContent,
+                    cellules[2].textContent,
+                    cellules[3].textContent,
+                    cellules[4].textContent,
+                    cellules[5].textContent
+                ];
+                donnees.push(lignePDF);
+            });
+
+            doc.autoTable({ head: [donnees[0]], body: donnees.slice(1), startY: 20, theme: 'striped' });
+            doc.save("dedicaces.pdf");
+        }
+    </script>
+
+</body>
+</html>
