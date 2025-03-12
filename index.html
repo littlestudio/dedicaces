@@ -155,23 +155,21 @@
             cellules[6].appendChild(boutonSupprimer);
         }
 
-        function sauvegarderTableau() {
-            let tableau = [];
-            let lignes = document.querySelectorAll("#tableau tbody tr");
-            lignes.forEach(ligne => {
-                let cellules = ligne.getElementsByTagName("td");
-                tableau.push({
-                    nom: cellules[0].textContent,
-                    quantiteAlbum: cellules[1].textContent,
-                    dedicace: cellules[2].textContent,
-                    paiement: cellules[3].textContent === "✅" ? "Oui" : "Non",
-                    paiementEmoji: cellules[3].textContent,
-                    totebag: cellules[4].textContent,
-                    quantiteTotebag: cellules[5].textContent
-                });
+        function trierTableau() {
+            let tableau = document.querySelector("#tableau tbody");
+            let lignes = Array.from(tableau.querySelectorAll("tr"));
+
+            lignes.sort((a, b) => {
+                let nomA = a.cells[0].textContent.toLowerCase();
+                let nomB = b.cells[0].textContent.toLowerCase();
+                return ordreCroissant ? nomA.localeCompare(nomB) : nomB.localeCompare(nomA);
             });
 
-            localStorage.setItem("dedicaces", JSON.stringify(tableau));
+            ordreCroissant = !ordreCroissant;
+            tableau.innerHTML = "";
+            lignes.forEach(ligne => tableau.appendChild(ligne));
+
+            sauvegarderTableau();
         }
 
         function exporterPDF() {
