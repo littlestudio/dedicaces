@@ -30,6 +30,9 @@
             margin-top: 10px;
             cursor: pointer;
         }
+        input, select {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -38,151 +41,36 @@
 
     <label>Nom du Client : </label>
     <input type="text" id="nomClient">
+    
+    <label>Quantité Albums : </label>
+    <input type="number" id="quantiteAlbum" min="1" value="1" style="width: 50px;">
+    
     <label>Dédicace : </label>
     <input type="text" id="dedicace">
+    
     <label>Payé ?</label>
     <select id="statutPaiement">
         <option value="Oui">Oui</option>
         <option value="Non">Non</option>
     </select>
+    
+    <label>Totebag ?</label>
+    <select id="totebag">
+        <option value="Non">Non</option>
+        <option value="Oui">Oui</option>
+    </select>
+    
+    <label>Quantité Totebags :</label>
+    <input type="number" id="quantiteTotebag" min="0" value="0" style="width: 50px;">
+    
     <button onclick="ajouterLigne()">Ajouter</button>
 
     <table id="tableau">
         <thead>
             <tr>
                 <th onclick="trierTableau()">Nom du Client &#9662;</th>
+                <th>Quantité Albums</th>
                 <th>Dédicace</th>
                 <th>Payé</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-
-    <button onclick="exporterPDF()">Exporter en PDF</button>
-
-    <script>
-        let ordreCroissant = true; // Variable pour suivre l'ordre du tri
-
-        document.addEventListener("DOMContentLoaded", chargerTableau);
-
-        function chargerTableau() {
-            let donnees = localStorage.getItem("dedicaces");
-            if (donnees) {
-                let tableau = JSON.parse(donnees);
-                tableau.forEach(ajouterLigneDepuisStockage);
-            }
-        }
-
-        function ajouterLigne() {
-            let nom = document.getElementById("nomClient").value.trim();
-            let dedicace = document.getElementById("dedicace").value.trim();
-            let paiement = document.getElementById("statutPaiement").value;
-
-            if (nom === "" || dedicace === "") {
-                alert("Veuillez remplir tous les champs.");
-                return;
-            }
-
-            ajouterLigneDepuisStockage({ nom, dedicace, paiement });
-
-            sauvegarderTableau();
-            trierTableau(); // Trie automatiquement après ajout
-
-            document.getElementById("nomClient").value = "";
-            document.getElementById("dedicace").value = "";
-        }
-
-        function ajouterLigneDepuisStockage(data) {
-            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
-            let nouvelleLigne = tableau.insertRow();
-
-            let celluleNom = nouvelleLigne.insertCell(0);
-            let celluleDedicace = nouvelleLigne.insertCell(1);
-            let cellulePaiement = nouvelleLigne.insertCell(2);
-            let celluleSupprimer = nouvelleLigne.insertCell(3);
-
-            celluleNom.textContent = data.nom;
-            celluleDedicace.textContent = data.dedicace;
-            cellulePaiement.textContent = data.paiement;
-
-            let boutonSupprimer = document.createElement("button");
-            boutonSupprimer.textContent = "Supprimer";
-            boutonSupprimer.onclick = function() {
-                tableau.deleteRow(nouvelleLigne.rowIndex - 1);
-                sauvegarderTableau();
-            };
-
-            celluleSupprimer.appendChild(boutonSupprimer);
-        }
-
-        function sauvegarderTableau() {
-            let tableau = [];
-            let lignes = document.querySelectorAll("#tableau tbody tr");
-            lignes.forEach(ligne => {
-                let cellules = ligne.getElementsByTagName("td");
-                tableau.push({
-                    nom: cellules[0].textContent,
-                    dedicace: cellules[1].textContent,
-                    paiement: cellules[2].textContent
-                });
-            });
-
-            localStorage.setItem("dedicaces", JSON.stringify(tableau));
-        }
-
-        function trierTableau() {
-            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
-            let lignes = Array.from(tableau.getElementsByTagName("tr"));
-
-            lignes.sort((a, b) => {
-                let nomA = a.cells[0].textContent.toLowerCase();
-                let nomB = b.cells[0].textContent.toLowerCase();
-
-                return ordreCroissant ? nomA.localeCompare(nomB) : nomB.localeCompare(nomA);
-            });
-
-            ordreCroissant = !ordreCroissant;
-
-            tableau.innerHTML = "";
-            lignes.forEach(ligne => tableau.appendChild(ligne));
-
-            sauvegarderTableau();
-        }
-
-        function exporterPDF() {
-            const { jsPDF } = window.jspdf;
-            let doc = new jsPDF();
-
-            doc.text("Liste des Dédicaces", 10, 10);
-
-            let tableau = document.getElementById("tableau");
-            let lignes = tableau.rows;
-            let donnees = [];
-
-            let entete = ["Nom du Client", "Dédicace", "Payé"];
-            donnees.push(entete);
-
-            for (let i = 1; i < lignes.length; i++) {
-                let cellules = lignes[i].cells;
-                let ligne = [
-                    cellules[0].textContent,
-                    cellules[1].textContent,
-                    cellules[2].textContent
-                ];
-                donnees.push(ligne);
-            }
-
-            doc.autoTable({
-                head: [donnees[0]],
-                body: donnees.slice(1),
-                startY: 20
-            });
-
-            doc.save("dedicaces.pdf");
-        }
-    </script>
-
-</body>
-</html>
+                <th>Totebag</th>
+                <th>Quantité Totebags
