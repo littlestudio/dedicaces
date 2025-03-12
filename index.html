@@ -39,13 +39,13 @@
 
     <h2>Liste des Dédicaces</h2>
 
-    <label>Nom du Client : </label>
+    <label>Nom du Client :</label>
     <input type="text" id="nomClient">
     
-    <label>Qté Albums : </label>
+    <label>Qté Albums :</label>
     <input type="number" id="quantiteAlbum" min="1" value="1" style="width: 50px;">
     
-    <label>Dédicace : </label>
+    <label>Dédicace :</label>
     <input type="text" id="dedicace">
     
     <label>Payé ?</label>
@@ -92,7 +92,7 @@
             let donnees = localStorage.getItem("dedicaces");
             if (donnees) {
                 let tableau = JSON.parse(donnees);
-                tableau.forEach(ajouterLigneDepuisStockage);
+                tableau.forEach(data => ajouterLigneDepuisStockage(data));
             }
         }
 
@@ -111,7 +111,7 @@
 
             let paiementEmoji = paiement === "Oui" ? "✅" : "❌";
 
-            let nouvelleLigne = { nom, quantiteAlbum, dedicace, paiementEmoji, totebag, quantiteTotebag };
+            let nouvelleLigne = { nom, quantiteAlbum, dedicace, paiement, paiementEmoji, totebag, quantiteTotebag };
             ajouterLigneDepuisStockage(nouvelleLigne);
 
             sauvegarderTableau();
@@ -164,6 +164,7 @@
                     nom: cellules[0].textContent,
                     quantiteAlbum: cellules[1].textContent,
                     dedicace: cellules[2].textContent,
+                    paiement: cellules[3].textContent === "✅" ? "Oui" : "Non",
                     paiementEmoji: cellules[3].textContent,
                     totebag: cellules[4].textContent,
                     quantiteTotebag: cellules[5].textContent
@@ -190,7 +191,7 @@
                     cellules[0].textContent,
                     cellules[1].textContent,
                     cellules[2].textContent,
-                    cellules[3].textContent,
+                    cellules[3].textContent === "✅" ? "Oui" : "Non",
                     cellules[4].textContent,
                     cellules[5].textContent
                 ];
