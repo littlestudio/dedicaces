@@ -23,6 +23,7 @@
         }
         th {
             background-color: #f4f4f4;
+            cursor: pointer;
         }
         button {
             padding: 5px 10px;
@@ -49,7 +50,7 @@
     <table id="tableau">
         <thead>
             <tr>
-                <th>Nom du Client</th>
+                <th onclick="trierTableau()">Nom du Client &#9662;</th>
                 <th>Dédicace</th>
                 <th>Payé</th>
                 <th>Action</th>
@@ -62,115 +63,126 @@
     <button onclick="exporterPDF()">Exporter en PDF</button>
 
     <script>
-    // Charger les données enregistrées
-    function chargerTableau() {
-        let donnees = localStorage.getItem("dedicaces");
-        if (donnees) {
-            let tableau = JSON.parse(donnees);
-            tableau.forEach(ajouterLigneDepuisStockage);
-        }
-    }
+        let ordreCroissant = true; // Variable pour suivre l'ordre du tri
 
-    // Ajouter une ligne dans le tableau (avec sauvegarde)
-    function ajouterLigne() {
-        let nom = document.getElementById("nomClient").value.trim();
-        let dedicace = document.getElementById("dedicace").value.trim();
-        let paiement = document.getElementById("statutPaiement").value;
+        document.addEventListener("DOMContentLoaded", chargerTableau);
 
-        if (nom === "" || dedicace === "") {
-            alert("Veuillez remplir tous les champs.");
-            return;
+        function chargerTableau() {
+            let donnees = localStorage.getItem("dedicaces");
+            if (donnees) {
+                let tableau = JSON.parse(donnees);
+                tableau.forEach(ajouterLigneDepuisStockage);
+            }
         }
 
-        let nouvelleLigne = ajouterLigneDepuisStockage({ nom, dedicace, paiement });
+        function ajouterLigne() {
+            let nom = document.getElementById("nomClient").value.trim();
+            let dedicace = document.getElementById("dedicace").value.trim();
+            let paiement = document.getElementById("statutPaiement").value;
 
-        // Sauvegarde des données
-        sauvegarderTableau();
+            if (nom === "" || dedicace === "") {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
 
-        // Réinitialiser les champs
-        document.getElementById("nomClient").value = "";
-        document.getElementById("dedicace").value = "";
-    }
+            ajouterLigneDepuisStockage({ nom, dedicace, paiement });
 
-    // Ajouter une ligne depuis LocalStorage sans la sauvegarder à nouveau
-    function ajouterLigneDepuisStockage(data) {
-        let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
-        let nouvelleLigne = tableau.insertRow();
-
-        let celluleNom = nouvelleLigne.insertCell(0);
-        let celluleDedicace = nouvelleLigne.insertCell(1);
-        let cellulePaiement = nouvelleLigne.insertCell(2);
-        let celluleSupprimer = nouvelleLigne.insertCell(3);
-
-        celluleNom.textContent = data.nom;
-        celluleDedicace.textContent = data.dedicace;
-        cellulePaiement.textContent = data.paiement;
-
-        let boutonSupprimer = document.createElement("button");
-        boutonSupprimer.textContent = "Supprimer";
-        boutonSupprimer.onclick = function() {
-            tableau.deleteRow(nouvelleLigne.rowIndex - 1);
             sauvegarderTableau();
-        };
+            trierTableau(); // Trie automatiquement après ajout
 
-        celluleSupprimer.appendChild(boutonSupprimer);
-        return nouvelleLigne;
-    }
-
-    // Sauvegarder le tableau dans LocalStorage
-    function sauvegarderTableau() {
-        let tableau = [];
-        let lignes = document.querySelectorAll("#tableau tbody tr");
-        lignes.forEach(ligne => {
-            let cellules = ligne.getElementsByTagName("td");
-            tableau.push({
-                nom: cellules[0].textContent,
-                dedicace: cellules[1].textContent,
-                paiement: cellules[2].textContent
-            });
-        });
-
-        localStorage.setItem("dedicaces", JSON.stringify(tableau));
-    }
-
-    function exporterPDF() {
-        const { jsPDF } = window.jspdf;
-        let doc = new jsPDF();
-
-        doc.text("Liste des Dédicaces", 10, 10);
-
-        let tableau = document.getElementById("tableau");
-        let lignes = tableau.rows;
-        let donnees = [];
-
-        // Ajouter l'en-tête
-        let entete = ["Nom du Client", "Dédicace", "Payé"];
-        donnees.push(entete);
-
-        // Ajouter les lignes du tableau (sans la colonne "Action")
-        for (let i = 1; i < lignes.length; i++) {
-            let cellules = lignes[i].cells;
-            let ligne = [
-                cellules[0].textContent, // Nom
-                cellules[1].textContent, // Dédicace
-                cellules[2].textContent  // Payé
-            ];
-            donnees.push(ligne);
+            document.getElementById("nomClient").value = "";
+            document.getElementById("dedicace").value = "";
         }
 
-        // Génération du tableau PDF
-        doc.autoTable({
-            head: [donnees[0]], // Première ligne : en-tête
-            body: donnees.slice(1), // Contenu du tableau
-            startY: 20
-        });
+        function ajouterLigneDepuisStockage(data) {
+            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
+            let nouvelleLigne = tableau.insertRow();
 
-        doc.save("dedicaces.pdf");
-    }
+            let celluleNom = nouvelleLigne.insertCell(0);
+            let celluleDedicace = nouvelleLigne.insertCell(1);
+            let cellulePaiement = nouvelleLigne.insertCell(2);
+            let celluleSupprimer = nouvelleLigne.insertCell(3);
 
-    // Charger les données sauvegardées au démarrage
-    document.addEventListener("DOMContentLoaded", chargerTableau);
-</script>
+            celluleNom.textContent = data.nom;
+            celluleDedicace.textContent = data.dedicace;
+            cellulePaiement.textContent = data.paiement;
+
+            let boutonSupprimer = document.createElement("button");
+            boutonSupprimer.textContent = "Supprimer";
+            boutonSupprimer.onclick = function() {
+                tableau.deleteRow(nouvelleLigne.rowIndex - 1);
+                sauvegarderTableau();
+            };
+
+            celluleSupprimer.appendChild(boutonSupprimer);
+        }
+
+        function sauvegarderTableau() {
+            let tableau = [];
+            let lignes = document.querySelectorAll("#tableau tbody tr");
+            lignes.forEach(ligne => {
+                let cellules = ligne.getElementsByTagName("td");
+                tableau.push({
+                    nom: cellules[0].textContent,
+                    dedicace: cellules[1].textContent,
+                    paiement: cellules[2].textContent
+                });
+            });
+
+            localStorage.setItem("dedicaces", JSON.stringify(tableau));
+        }
+
+        function trierTableau() {
+            let tableau = document.getElementById("tableau").getElementsByTagName("tbody")[0];
+            let lignes = Array.from(tableau.getElementsByTagName("tr"));
+
+            lignes.sort((a, b) => {
+                let nomA = a.cells[0].textContent.toLowerCase();
+                let nomB = b.cells[0].textContent.toLowerCase();
+
+                return ordreCroissant ? nomA.localeCompare(nomB) : nomB.localeCompare(nomA);
+            });
+
+            ordreCroissant = !ordreCroissant;
+
+            tableau.innerHTML = "";
+            lignes.forEach(ligne => tableau.appendChild(ligne));
+
+            sauvegarderTableau();
+        }
+
+        function exporterPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+
+            doc.text("Liste des Dédicaces", 10, 10);
+
+            let tableau = document.getElementById("tableau");
+            let lignes = tableau.rows;
+            let donnees = [];
+
+            let entete = ["Nom du Client", "Dédicace", "Payé"];
+            donnees.push(entete);
+
+            for (let i = 1; i < lignes.length; i++) {
+                let cellules = lignes[i].cells;
+                let ligne = [
+                    cellules[0].textContent,
+                    cellules[1].textContent,
+                    cellules[2].textContent
+                ];
+                donnees.push(ligne);
+            }
+
+            doc.autoTable({
+                head: [donnees[0]],
+                body: donnees.slice(1),
+                startY: 20
+            });
+
+            doc.save("dedicaces.pdf");
+        }
+    </script>
 
 </body>
 </html>
